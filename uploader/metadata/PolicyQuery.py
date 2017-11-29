@@ -57,17 +57,22 @@ class PolicyQuery(CommonBase):
         """Set the policy server url and define any data for the query."""
         self._server_url(
             [
+                ('proto', 'http'),
                 ('port', 8181),
                 ('addr', '127.0.0.1'),
-                ('path', '/uploader'),
-                ('url', None)
+                ('uploader_path', '/uploader'),
+                ('ingest_path', '/ingest'),
+                ('uploader_url', None)
+                ('ingest_url', None)
             ],
             'POLICY',
             kwargs
         )
+        if not self._uploader_url:
+            self._uploader_url = '{}://{}:{}{}'.format(self._proto, self._addr, self._port, self._uploader_path)
+        if not self._ingest_url:
+            self._ingest_url = '{}://{}:{}{}'.format(self._proto, self._addr, self._port, self._ingest_path)
         self._setup_requests_session()
-        if not self._url:
-            self._url = 'http://{}:{}{}'.format(self._addr, self._port, self._path)
         self._auth = kwargs.pop('auth', {})
         LOGGER.debug('Policy URL %s auth %s', self._url, self._auth)
         # global sential value for userid
@@ -92,9 +97,17 @@ class PolicyQuery(CommonBase):
     def get_results(self):
         """Get results from the Policy server for the query."""
         headers = {'content-type': 'application/json'}
-        LOGGER.debug('Policy Query %s', self.tojson())
-        reply = self.session.post(self._url, headers=headers, data=self.tojson(), **self._auth)
-        LOGGER.debug('Policy Result %s', reply.content)
+        LOGGER.debug('Policy Query Uploader %s', self.tojson())
+        reply = self.session.post(self._uploader_url, headers=headers, data=self.tojson(), **self._auth)
+        LOGGER.debug('Policy Result Uploader %s', reply.content)
+        return reply.json()
+
+    def valid_metadata(self, md_obj):
+        """Check the metadata object against the ingest API."""
+        headers = {'content-type': 'application/json'}
+        LOGGER.debug('Policy Query Ingest %s', md_obj.tojson())
+        reply = self.session.post(self._ingest_url, headers=headers, data=md_obj.tojson(), **self._auth)
+        LOGGER.debug('Policy Result Ingest %s', reply.content)
         return reply.json()
 
 

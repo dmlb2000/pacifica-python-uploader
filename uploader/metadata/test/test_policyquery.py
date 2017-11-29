@@ -2,6 +2,7 @@
 """Test the metadata module."""
 from __future__ import absolute_import
 from unittest import TestCase
+from .. import metadata_decode
 from ..PolicyQuery import PolicyQuery
 
 
@@ -38,3 +39,14 @@ class TestPolicyQuery(TestCase):
         """Test getting a user and converting it to and from ID/networkID."""
         policyquery = PolicyQuery(user=10)
         self.assertEqual(policyquery.get_user(), 10)
+
+    def test_check_metadata(self):
+        """Test the check metadata method for valid metadata."""
+        policyquery = PolicyQuery(user=10)
+        md_obj = metadata_decode("""[
+            { "destinationTable": "Transactions.submitter", "value": 10 },
+            { "destinationTable": "Transactions.proposal", "value": "1234a" },
+            { "destinationTable": "Transactions.instrument", "value": 54 }
+        ]""")
+        result = policyquery.check_metadata(md_obj)
+        self.assertEqual(result, 'blarg')
