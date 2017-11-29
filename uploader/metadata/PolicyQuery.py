@@ -29,10 +29,13 @@ class PolicyQuery(CommonBase):
 
     pq_data = None
     user_id = None
+    _proto = None
     _addr = None
     _port = None
-    _path = None
-    _url = None
+    _uploader_path = None
+    _ingest_path = None
+    _uploader_url = None
+    _ingest_url = None
     _auth = None
 
     def set_user(self, user):
@@ -53,6 +56,13 @@ class PolicyQuery(CommonBase):
         """Get the user id."""
         return self.user_id
 
+    def _set_url_from_parts(self):
+        """Set the url from the parts in self."""
+        for url_part in ['uploader', 'ingest']:
+            if not getattr(self, '_{}_url'.format(url_part)):
+                url_str = '{}://{}:{}{}'.format(self._proto, self._addr, self._port, self._uploader_path)
+                setattr(self, '_{}_url'.format(url_part), url_str)
+
     def __init__(self, user, *args, **kwargs):
         """Set the policy server url and define any data for the query."""
         self._server_url(
@@ -62,19 +72,16 @@ class PolicyQuery(CommonBase):
                 ('addr', '127.0.0.1'),
                 ('uploader_path', '/uploader'),
                 ('ingest_path', '/ingest'),
-                ('uploader_url', None)
+                ('uploader_url', None),
                 ('ingest_url', None)
             ],
             'POLICY',
             kwargs
         )
-        if not self._uploader_url:
-            self._uploader_url = '{}://{}:{}{}'.format(self._proto, self._addr, self._port, self._uploader_path)
-        if not self._ingest_url:
-            self._ingest_url = '{}://{}:{}{}'.format(self._proto, self._addr, self._port, self._ingest_path)
+        self._set_url_from_parts()
         self._setup_requests_session()
         self._auth = kwargs.pop('auth', {})
-        LOGGER.debug('Policy URL %s auth %s', self._url, self._auth)
+        LOGGER.debug('Policy URL %s auth %s', self._uploader_url, self._auth)
         # global sential value for userid
         if user != -1:
             self.set_user(user)

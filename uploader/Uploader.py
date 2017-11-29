@@ -10,6 +10,7 @@ LOGGER = logging.getLogger(__name__)
 class Uploader(CommonBase):
     """Uploader class to upload the bundle to an ingest server."""
 
+    _proto = None
     _addr = None
     _port = None
     _upload_path = None

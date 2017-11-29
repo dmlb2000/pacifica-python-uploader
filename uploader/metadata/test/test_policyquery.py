@@ -40,13 +40,13 @@ class TestPolicyQuery(TestCase):
         policyquery = PolicyQuery(user=10)
         self.assertEqual(policyquery.get_user(), 10)
 
-    def test_check_metadata(self):
-        """Test the check metadata method for valid metadata."""
+    def test_valid_metadata(self):
+        """Test the valid metadata method for valid metadata."""
         policyquery = PolicyQuery(user=10)
         md_obj = metadata_decode("""[
             { "destinationTable": "Transactions.submitter", "value": 10 },
             { "destinationTable": "Transactions.proposal", "value": "1234a" },
             { "destinationTable": "Transactions.instrument", "value": 54 }
         ]""")
-        result = policyquery.check_metadata(md_obj)
+        result = policyquery.valid_metadata(md_obj)
         self.assertEqual(result, 'blarg')
