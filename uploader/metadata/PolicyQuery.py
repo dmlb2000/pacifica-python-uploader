@@ -61,7 +61,12 @@ class PolicyQuery(CommonBase):
         """Set the url from the parts in self."""
         for url_part in ['uploader', 'ingest']:
             if not getattr(self, '_{}_url'.format(url_part)):
-                url_str = '{}://{}:{}{}'.format(self._proto, self._addr, self._port, self._uploader_path)
+                url_str = '{}://{}:{}{}'.format(
+                    self._proto,
+                    self._addr,
+                    self._port,
+                    getattr(self, '_{}_path'.format(url_part))
+                )
                 setattr(self, '_{}_url'.format(url_part), url_str)
 
     def __init__(self, user, *args, **kwargs):
