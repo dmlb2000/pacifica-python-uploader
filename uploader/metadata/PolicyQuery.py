@@ -113,7 +113,7 @@ class PolicyQuery(CommonBase):
     def valid_metadata(self, md_obj):
         """Check the metadata object against the ingest API."""
         headers = {'content-type': 'application/json'}
-        LOGGER.debug('Policy Query Ingest %s', md_obj.tojson())
+        LOGGER.debug('Policy Query Ingest %s', metadata_encode(md_obj))
         reply = self.session.post(self._ingest_url, headers=headers, data=metadata_encode(md_obj), **self._auth)
         LOGGER.debug('Policy Result Ingest %s', reply.content)
         return reply.json()
