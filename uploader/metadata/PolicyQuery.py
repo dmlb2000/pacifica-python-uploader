@@ -5,6 +5,7 @@ import json
 import logging
 from collections import namedtuple
 from .Json import generate_namedtuple_encoder, generate_namedtuple_decoder
+from .MetaData import metadata_encode
 from ..common import CommonBase
 
 LOGGER = logging.getLogger(__name__)
@@ -113,7 +114,7 @@ class PolicyQuery(CommonBase):
         """Check the metadata object against the ingest API."""
         headers = {'content-type': 'application/json'}
         LOGGER.debug('Policy Query Ingest %s', md_obj.tojson())
-        reply = self.session.post(self._ingest_url, headers=headers, data=md_obj.tojson(), **self._auth)
+        reply = self.session.post(self._ingest_url, headers=headers, data=metadata_encode(md_obj), **self._auth)
         LOGGER.debug('Policy Result Ingest %s', reply.content)
         return reply.json()
 
