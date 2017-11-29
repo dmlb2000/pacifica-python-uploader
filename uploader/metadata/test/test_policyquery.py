@@ -49,4 +49,5 @@ class TestPolicyQuery(TestCase):
             { "destinationTable": "Transactions.instrument", "value": 54 }
         ]""")
         result = policyquery.valid_metadata(md_obj)
-        self.assertEqual(result, 'blarg')
+        self.assertTrue('status' in result)
+        self.assertEqual(result['status'], 'success')
