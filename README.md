@@ -137,9 +137,14 @@ validates the given instance of the `uploader.metadata.MetaData` class,
 [Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
 
 The `uploader.metadata.PolicyQuery.PolicyQuery.get_results()` method returns a
-JSON object whose attribute-value pairs indicate the success or failure of the
-query to the designated
-[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
+JSON object that represents the result set for a query to the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server, i.e., the
+entities that match the criteria that is represented by the associated instance
+of the `uploader.metadata.PolicyQuery.PolicyQueryData` class.
+
+The success or failure of the query to the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server is
+indicated by the HTTP status code of the query response.
 
 ##### `uploader.metadata.PolicyQuery.PolicyQueryData(collections.namedtuple)` class
 
