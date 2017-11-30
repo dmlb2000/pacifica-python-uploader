@@ -247,7 +247,7 @@ to interact with the modules, classes and methods above, and, by extension,
 
 5. The value of the `uploader.metadata.MetaData.query_results` field MUST be
    rendered according to the uploader-program-specific definition that is
-   interpreted from the value of the `uploader.metadata.MetaObj.displayType`
+   interpreted from the value of the `uploader.metadata.MetaObj.displayFormat`
    field, e.g., in the Python programming language, by calling the `str.format`
    method or by leveraging a template engine, such as
    [Cheetah](https://pypi.python.org/pypi/Cheetah) or
