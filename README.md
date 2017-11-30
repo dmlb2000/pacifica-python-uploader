@@ -230,7 +230,9 @@ to interact with the modules, classes and methods above, and, by extension,
 
 2. To determine completeness, the new instance of the
    `uploader.metadata.MetaUpdate` class SHOULD be validated using the
-   `uploader.metadata.PolicyQuery.PolicyQuery.valid_metadata()` method.
+   `uploader.metadata.MetaData.is_valid()` method (inherited by the
+   `uploader.metadata.MetaUpdate` sub-class). Then, the uploader program MUST
+   call the `uploader.metadata.PolicyQuery.PolicyQuery.valid_metadata()` method.
    The new instance of the `uploader.metadata.MetaUpdate` class MUST be valid
    prior to bundling.
 
