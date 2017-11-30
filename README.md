@@ -4,196 +4,307 @@
 [![Test Coverage](https://codeclimate.com/github/pacifica/pacifica-python-uploader/badges/coverage.svg)](https://codeclimate.com/github/pacifica/pacifica-python-uploader/coverage)
 [![Issue Count](https://codeclimate.com/github/pacifica/pacifica-python-uploader/badges/issue_count.svg)](https://codeclimate.com/github/pacifica/pacifica-python-uploader)
 
-Python library to handle bundling, metadata and uploading files to an ingester.
+Pacifica Python Uploader, `PacificaUploader`, is a Python programming language
+library for managing, serializing and transporting (over a network) archives of
+files (referred to as "bundles"), managing both the data and the metadata of the
+bundle, and interacting with
+[Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) and
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) servers.
 
-## Object Reference
+> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+> "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be
+> interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
-The following objects and short descriptions are available as follows.
+## API reference
 
-### MetaData
+This section gives an overview of the modules, classes and methods that are
+exported by the Pacifica Python Uploader library: `PacificaUploader`.
 
-The `MetaData` module handles the required metadata needed to create a successful
-upload. The logic for encoding and decoding into JSON is also present in the library.
-This object must encode into JSON compatible with the ingest service.
+### `uploader.metadata` module
 
-#### MetaData Object
+The `uploader.metadata` module exports classes and methods for manipulating and
+serializing the metadata for bundles of files.
 
-The `MetaData()` object is the upperlevel object storing all the required upload and
-file metadata. This object is currently a child of `list` to allow for easy integration
-with other python objects. Additions to the `list` methods have been made to index off
-the `metaID` attribute in the `MetaObj` class.
+Encoding and decoding to the JSON data format is supported for compatible
+objects (see `uploader.metadata.Json` module for more information).
 
-#### MetaObj Object
+#### `uploader.metadata.MetaData(list)` class
 
-The `MetaObj()` object is an instance of a single piece of uploaded metadata. This
-means that it's not file metadata. The `MetaObj()` object allows for references
-between attributes of the class and allows for updates to occure at the `MetaData()`
-layer. This is currently implemented as a `namedtuple` for easy integration with
-other python objects.
+Instances of the `uploader.metadata.MetaData` class are upper-level objects that
+provide the metadata for interacting with the designated
+[Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) server.
 
-#### FileObj Object
+The `uploader.metadata.MetaData` class is a sub-class of `list` that implements
+the index protocol (`__getitem__`, `__setitem__` and `__delitem__`) as a proxy
+to the indices of the value of the `metaID` field of the associated instance of
+the `uploader.metadata.MetaObj` class.
 
-The `FileObj()` object is an instance of a single files metadata. This is meant to
-be appended to the `MetaData()` object when an upload occures. The attributes of the
-`FileObj()` directly match with the file object stored in
-[Pacifica Metadata](https://github.com/pacifica/pacifica-metadata)
-so please refer to that for what the
-values are supposed to be. This is currently implemented as a `namedtuple` for easy
-integration with other python objects.
+#### `uploader.metadata.MetaObj(collections.namedtuple)` class
 
-#### Metadata Decode
+Instances of the `uploader.metadata.MetaObj` class represent units of metadata
+whose representation is disjoint to a file, i.e., units of metadata that are
+describe but are not stored as part of a file.
 
-The `metadata_decode()` method decodes a JSON string into a `MetaData()` object
-filled with `MetaObj()` and `FileObj()` objects. The method returns the resulting
-`MetaData()` object.
+The `uploader.metadata.MetaObj` class is a sub-class of the
+`collections.namedtuple` class with the following named fields:
+* `sourceTable`
+* `destinationTable`
+* `metaID`
+* `displayType`
+* `displayTitle`
+* `queryDependency`
+* `valueField`
+* `queryFields`
+* `displayFormat`
+* `key`
+* `value`
+* `directoryOrder`
+* `query_results`
 
-#### Metadata Encoding
+#### `uploader.metadata.FileObj(collections.namedtuple)` class
 
-The `metadata_encode()` method encodes a `MetaData()` object with a number of
-`MetaObj()` and `FileObj()` objects into a JSON string. The method returns the
-resulting JSON string.
+Instances of the `uploader.metadata.FileObj` class represent individual files,
+including both the data and metadata for the file. During a file upload,
+instances of the `uploader.metadata.FileObj` class are automatically associated
+with new instances of the `uploader.metadata.MetaData` class.
 
-#### Json
+The `uploader.metadata.FileObj` class is a sub-class of the
+`collections.namedtuple` class with the following named fields:
+* `destinationTable`
+* `name`
+* `subdir`
+* `size`
+* `hashtype`
+* `hashsum`
+* `mimetype`
+* `ctime`
+* `mtime`
 
-The `Json` module encapsulates the JSON parsing logic into a common library.
-This module contains the general generators for creating `json.Encoder` and
-`json.Decoder` child classes.
+The above named fields are identical to those of the `metadata.orm.Files` class,
+provided by the
+[Pacifica Metadata](https://github.com/pacifica/pacifica-metadata) library.
 
-##### NamedTuple Encoders and Decoders
+#### `uploader.metadata.metadata_decode(json_str)` method
 
-The `generate_namedtuple_encoder` and `generate_namedtuple_decoder` methods
-return `json.Encoder` and `json.Decoder` child classes, respectively. These
-classes encode or decode a child class of `collections.namedtuple`.
+The `uploader.metadata.metadata_decode()` method deserializes the given
+JSON source, `json_str`, and then returns a new instance of the
+`uploader.metadata.MetaData` class.
 
-#### Policy
+The new instance is automatically associated with new instances of the
+`uploader.metadata.MetaObj` and `uploader.metadata.FileObj` classes.
 
-This module contains all the logic to generate and execute queiries against
-the Pacifica Policy service.
+#### `uploader.metadata.metadata_encode(md_obj)` method
 
-##### PolicyQueryData
+The `uploader.metadata.metadata_encode()` method encodes the given
+instance of the `uploader.metadata.MetaData` class, `md_obj`, as a JSON object,
+and then returns its JSON serialization.
 
-This `namedtuple` contains the data required to generate a valid Policy
-service query.
+Associated instances of the `uploader.metadata.MetaObj` and
+`uploader.metadata.FileObj` classes are automatically included in the JSON
+object and the resulting JSON serialization.
 
-##### PolicyQuery
+#### `uploader.metadata.Json` module
 
-This object contains a `PolicyQueryData` object, mangles the object to send
-it to the Policy service. This object also has logic to pull the endpoint for
-the Policy service from the environment or constructor keyword arguments.
-Another requirement for this object is to return the results from a query to
-the calling object.
+The `uploader.metadata.Json` module exports generators for encoding and decoding
+instances of the `collections.namedtuple` class using the JSON data format.
 
-This object also contains the method to validate the completed `MetaData`
-object against the ingest endpoint. Valid json is returned containing the
-success or failure of the metadata to ingest.
+The `uploader.metadata.Json.generate_namedtuple_encoder()` and
+`uploader.metadata.Json.generate_namedtuple_decoder()` methods return
+sub-classes of the given super-class, which delegate to instances of the
+`json.JSONEncoder` and `json.JSONDecoder` classes, respectively.
 
-#### MetaUpdate
+#### `uploader.metadata.PolicyQuery` module
 
-This module has all the `MetaData` update code for determining parents and
-children to update when values get updated.
+The `uploader.metadata.PolicyQuery` module exports classes and methods for
+interacting with the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
 
-##### MetaUpdate
+##### `uploader.metadata.PolicyQuery.PolicyQuery(uploader.common.CommonBase)` class
 
-The `MetaUpdate` class inherits from the `MetaData` class and provides methods
-for querying the policy server to get results from the metadata and update
-those results in the `MetaData` object.
+Instances of the `uploader.metadata.PolicyQuery.PolicyQuery` class represent
+queries to the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
 
-### Bundler
+The HTTP end-point for the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server is
+automatically pulled either from the system environment or from the keyword
+arguments, `**kwargs`, for the
+`uploader.metadata.PolicyQuery.PolicyQuery(user, *args, **kwargs)` constructor.
 
-This module defines a streaming bundler that allows one to stream the data and
-metadata to a file descriptor. The file descriptor is open for write binary
-and provides a single pass over the data files provided.
+The `uploader.metadata.PolicyQuery.PolicyQuery.valid_metadata(md_obj)` method
+validates the given instance of the `uploader.metadata.MetaData` class,
+`md_obj`, with respect to the capabilities of the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
 
-#### Bundler
+The `uploader.metadata.PolicyQuery.PolicyQuery.get_results()` method returns a
+JSON object whose attribute-value pairs indicate the success or failure of the
+query to the designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
 
-The `Bundler` class provides a method called `stream()` to send the bundle to
-a file descriptor. The class is created using an array of hashes that define
-the arguments to `tarfile.TarFile.gettarinfo()`. However, the `arcname` argument
-is required. The `stream()` method is blocking. However, it does have a callback
-argument that sets up a thread to get percent complete from the stream thread
-as it's processing.
+##### `uploader.metadata.PolicyQuery.PolicyQueryData(collections.namedtuple)` class
 
-### Uploader
+Instances of the `uploader.metadata.PolicyQuery.PolicyQueryData` class represent
+the data for the generation of a query to a designated
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) server.
 
-This module provides the basic upload functionality to interface with the
-ingest service.
+The `uploader.metadata.PolicyQuery.PolicyQueryData` class is a sub-class of the
+`collections.namedtuple` class with the following named fields:
+* `user`
+* `columns`
+* `from_table`
+* `where`
 
-#### Uploader
+#### `uploader.metadata.MetaUpdate` module
 
-The `Uploader` class provides the interface for handling connections to the
-ingest service. There are two methods `upload()` and `getstate()`. The
-`upload()` method takes a file like object open for read binary and returns
-a job_id for that upload. The `getstate()` method takes a job_id and returns
-a json object as defined by the ingest API for getting job status.
+The `uploader.metadata.MetaUpdate` module exports classes and methods for
+constructing and executing the strategy for modifying the values, including the
+parents and children, of instances of the `uploader.metadata.MetaData` class.
+
+##### `uploader.metadata.MetaUpdate.MetaUpdate(uploader.metadata.MetaData)` class
+
+The `uploader.metadata.MetaUpdate.MetaUpdate` class is a sub-class of the
+`uploader.metadata.MetaData` class that is specialized to issue and handle
+queries to [Pacifica Policy](https://github.com/pacifica/pacifica-policy)
+servers.
+
+### `uploader.bundler` module
+
+The `uploader.bundler` module exports classes and methods for constructing and
+streaming bundles of files to a designated file descriptor. The file descriptor
+is opened once, and the stream is generated by a single pass over the specified
+files.
+
+#### `uploader.bundler.Bundler(object)` class
+
+The `uploader.bundler.Bundler.stream()`
+method streams a bundle of files to a designated file descriptor. The
+`uploader.bundler.Bundler` class is created by providing a `list` of `dict`s
+that specifies the arguments to the `tarfile.TarFile.gettarinfo()` method.
+
+> **Note:** The `arcname` keyword argument MUST be provided when calling the
+> `tarfile.TarFile.gettarinfo()` method.
+
+The `uploader.bundler.Bundler.stream()` method is a blocking I/O operation.
+An asynchronous callback method MAY be provided via the optional `callback`
+keyword argument. Periodically, the callback method is provided with the current
+percentage of completion.
+
+> **Note:** File handles are opened for reading in binary mode.
+
+### `uploader.Uploader` module
+
+The `uploader.Uploader` module exports classes and methods for interacting with
+[Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) servers.
+
+#### `uploader.Uploader.Uploader(uploader.common.CommonBase)` class
+
+The `uploader.Uploader.Uploader` class exports methods that provide an API for
+connecting to and handling connections to
+[Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) servers.
+
+The `uploader.Uploader.Uploader.upload()` method takes a file-like object as
+input that has been opened for reading in binary mode, and returns a `job_id`
+for the upload.
+
+The `uploader.Uploader.Uploader.getstate()` method takes a `job_id` as input,
+and returns a JSON object, as defined by the
+[Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) API for
+obtaining the status of the current job.
 
 ## Uploader Expectations and Application Flows
 
-There are general expectations that cover how an uploader is supposed to
-interact with the services and objects above. The following section we will
-discuss some program flows in general and how it might apply to different
-uploader implementations.
+This section describes how an end-user of Pacifica Python Uploader is expected
+to interact with the modules, classes and methods above, and, by extension,
+[Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) and
+[Pacifica Policy](https://github.com/pacifica/pacifica-policy) servers.
 
 ### Uploader Program Flow
 
-The uploader program should start by building a `MetaUpdate` object which may
-contain some holes (`MetaObj` objects with no values). This object may not
-contain any `FileObj` objects. This object can be validated at anytime to
-determine completness, but must be valid prior to bundling.
+1. The uploader program MUST construct a new instance of the
+   `uploader.metadata.MetaUpdate` class. The new instance of the
+   `uploader.metadata.MetaUpdate` class MAY be associated with zero or more of
+   instances of the `uploader.metadata.MetaObj` class. The
+   `uploader.metadata.MetaObj.value` field MAY be `None`. The new instance of
+   the `uploader.metadata.MetaUpdate` class MUST NOT be associated with any
+   instances of the `uploader.metadata.FileObj` class.
 
-The uploader program should use the `displayType` attribute of the `MetaObj`
-to determine how the user should select the `value` attribute of that
-`MetaObj`. The values of the `displayType` are arbitrary and should be defined
-by the uploader.
+2. To determine completeness, the new instance of the
+   `uploader.metadata.MetaUpdate` class SHOULD be validated using the
+   `uploader.metadata.PolicyQuery.PolicyQuery.valid_metadata()` method.
+   The new instance of the `uploader.metadata.MetaUpdate` class MUST be valid
+   prior to bundling.
 
-The uploader program should populate the `query_results` for each hole in
-`MetaData` by calling `MetaUpdate.query_results()`. The `query_results`
-attribute is an array of objects that should be rendered by the
-`displayFormat` attribute and displayed to the user. The uploader program may
-call `query_results()` for `MetaObj` objects that already have values. In
-Python, using string formatting is sufficient, but more complicated formatting
-(i.e. Cheetah) can also be used. The specifics of how `displayFormat` is used
-to render `query_results` are defined by the uploader.
+3. The uploader program MUST dereference the
+   `uploader.metadata.MetaObj.displayType` field to determine the mode of
+   selection for the `uploader.metadata.MetaObj.value` field. The value of the
+   `uploader.metadata.MetaObj.displayType` field is uploader-program-specific,
+   i.e., the value MUST be defined by the uploader program.
 
-If the uploader program has more than one hole and there exist dependencies
-between those holes. The program must not fail if there isn't any
-`query_results` to render. This is common in more complicated metadata query
-models and the uploader must handle this.
+4. The uploader program MUST assign a non-`None` value to each
+   `uploader.metadata.MetaData.query_results` field by calling the
+   `uploader.metadata.MetaUpdate.query_results()` method. The
+   `uploader.metadata.MetaData.query_results` field is a `list`.
 
-When the uploader program is ready for a value to be selected. The uploader
-program must set the `value` attribute in the respective `MetaObj` to the
-`valueField` attribute of the object selected. The uploader must then call
-`update_parents()` with the `MetaObj` selected. This will update the `value`
-attribute for many `MetaObj` objects and the updated `MetaUpdate` object should
-be rendered and presented to the user as previously discussed.
+5. The value of the `uploader.metadata.MetaData.query_results` field MUST be
+   rendered according to the uploader-program-specific definition that is
+   interpreted from the value of the `uploader.metadata.MetaObj.displayType`
+   field, e.g., in the Python programming language, by calling the `str.format`
+   method or by leveraging a template engine, such as
+   [Cheetah](https://pypi.python.org/pypi/Cheetah) or
+   [Jinja2](https://pypi.python.org/pypi/Jinja2).
 
-The uploader program must then verify `MetaUpdate.is_valid()` returns true.
-If not the uploader program must repeat the previous paragraph until it does.
-This is open ended and depends highly on properly formatting the `MetaData`
-object with well organized metadata.
+6. The uploader program MAY call the
+   `uploader.metadata.MetaUpdate.query_results()` method for instances of the
+   `uploader.metadata.MetaObj` class whose `value` field is non-`None`.
 
-The uploader program should then call the `PolicyQuery.valid_metadata()` method
-to validate the completed metadata prior to upload. This prevents the uploader
-from uploading metadata not valid by the ingest policy. The uploader program
-should then parse the result for success then proceed.
+7. The uploader program MUST handle all instances `uploader.metadata.MetaUpdate`
+   class, regardless of validity, i.e., the uploader program MUST NOT reject an
+   instance of the `uploader.metadata.MetaUpdate` class under any circumstances,
+   e.g., if there are unsatisfied dependencies between instances of the
+   `uploader.metadata.MetaData` class.
 
-When the uploader program is ready to bundle the data. The uploader program
-must build an array of objects that represent the attributes of a `tar.TarInfo`
-object. Additionally, the object must have a `fileobj` attribute which is an
-object the bundler will call the `read()` method like a standard open file
-object.
+8. When the uploader program is ready for a given
+   `uploader.metadata.MetaObj.value` field to be selected, the uploader program
+   MUST assign to the `uploader.metadata.MetaObj.value` field the value of the
+   `uploader.metadata.MetaObj.valueField` field, and then call the
+   `uploader.metadata.MetaObj.update_parents()` method. The effect of this
+   operation is to update the `uploader.metadata.MetaObj.value` fields of
+   associated and dependent instances of the `uploader.metadata.MetaObj` class.
+   After modification, the new state of the instance of the
+   `uploader.metadata.MetaUpdate.MetaUpdate` class SHOULD be displayed to the
+   end-user, as previously discussed.
 
-The uploader program must then create a `Bundler` object with the `MetaUpdate`
-and the array of `tar.TarInfo` objects as stated in the previous paragraph.
-The uploader program must then setup a writable file object and call the
-`stream()` method.
+9. The uploader program MUST verify that
+   `uploader.metadata.MetaUpdate.MetaUpdate.is_valid() == True`. If the instance
+   of the `uploader.metadata.MetaUpdate.MetaUpdate` class is not valid, then the
+   uploader program MUST repeat the instructions in the paragraph 8.
 
-The uploader program must then create a `Uploader` object. The uploader program
-must then setup a file-like object open for read and call the `upload()` method.
+10. The uploader program MUST call the
+    `uploader.metadata.PolicyQuery.PolicyQueryData.valid_metadata()` method to
+    validate the instance of the `uploader.metadata.MetaUpdate.MetaUpdate` class
+    prior to upload. This prevents the uploader program from uploading metadata
+    that is invalid with respect to the policy of the
+    [Pacifica Ingest](https://github.com/pacifica/pacifica-ingest) server.
 
-The two file-like objects are open for read and write for upload and bundle
-respectively intentionally as this allows for setting up pipes between multiple
-processes to stream the data without keeping a local copy.
+11. When the uploader program is ready to bundle the data, the uploader program
+    MUST construct a `list` of objects, representing the fields of the
+    corresponding instance of the `tar.TarInfo` class. Each object MUST export a
+    `fileobj` field whose value implements the file protocol, i.e., exports a
+    `read()` method.
 
-The uploader must then verify the ingest has succeeded in ingest by calling
-`getstate()` and parsing the ingest response. If there is an error the uploader
-may perform the upload again.
+12. The uploader program MUST construct a new instance of the
+    `metadata.bundler.Bundler` class using the instances of the
+    `uploader.metadata.MetaUpdate.MetaUpdate` and `tar.TarInfo` classes, as
+    previously stated in paragraph 11. Then, the uploader program MUST construct
+    a file-like object that can be written to in binary mode, and then call the
+    `uploader.bundler.Bundler.stream()` method.
+
+13. The uploader program MUST construct a new instance of the
+    `metadata.Uploader.Uploader` class. Then, the uploader program MUST
+    construct a file-like object that can be read in binary mode, and then call
+    the `uploader.bundler.Bundler.upload()` method.
+
+14. Finally, the uploader program MUST verify the result of the ingest by
+    calling the `uploader.Uploader.Uploader.getstate()` method. If an
+    ingest-related error occurs, then the uploader program MAY repeat the ingest
+    operation.
